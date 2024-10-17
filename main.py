@@ -50,6 +50,18 @@ def save_password():
 
 
 
+#---------------------Get Last Used Email----------------------------#
+with open("data.txt", mode="rb") as data:
+  data.seek(-2, 2)  # Move to the second last byte of the data
+  while data.read(1) != b'\n':  # Move backwards until you find a newline character
+    data.seek(-2, 1)
+  last_line = data.readline().decode()
+  start = last_line.find('|') + 1  # Find the index of the first | and move one step forward
+  end = last_line.find('|', start)  # Find the index of the next | after start
+  previous_email = last_line[start:end].strip()
+
+
+
 # ------------------------------UI Setup-----------------------------#
 window = Tk()
 window.title("Password Manager")
@@ -68,25 +80,24 @@ email_username_label = Label(text = "Email/Username : ")
 email_username_label.grid(row = 2, column=0)
 
 password_label = Label(text="Password : ")
-password_label.grid(row = 3, column=0)
+password_label.grid(row = 3, column=0, )
 
-website_Entry = Entry(width=35)
-website_Entry.grid(row=1, column=1, columnspan=2)
+website_Entry = Entry(width=52)
+website_Entry.grid(row=1, column=1, columnspan=2, sticky='w')
 website_Entry.focus()
 
-email_username_Entry = Entry(width=35)
-email_username_Entry.grid(row=2,column=1, columnspan=2)
-email_username_Entry.insert(0, "harish@gmail.com")
+email_username_Entry = Entry(width=52)
+email_username_Entry.grid(row=2,column=1, columnspan=2, sticky='w')
+email_username_Entry.insert(0, f"{previous_email}")
 
-password_Entry = Entry(width=21)
-password_Entry.grid(row=3, column=1)
+password_Entry = Entry(width=32)
+password_Entry.grid(row=3, column=1, sticky='w')
 
 generate_button= Button(text="Generate Password", command=generate_password)
-generate_button.grid(row=3, column=2)
+generate_button.grid(row=3, column=2, sticky='w')
 
-add_password_button = Button(text="Add", width=36, command=save_password)
-add_password_button.grid(row=4, column =1, columnspan=2)
-
+add_password_button = Button(text="Add", width=44, command=save_password)
+add_password_button.grid(row=4, column =1, columnspan=2, sticky='w')
 
 
 
