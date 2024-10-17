@@ -3,7 +3,8 @@ from tkinter import *
 from tkinter import messagebox
 import random
 import pyperclip
-from tkinter.messagebox import showinfo
+import os
+
 
 #-----------------password generator-------------------------#
 def generate_password():
@@ -15,9 +16,9 @@ def generate_password():
   nr_symbols = random.randint(2, 4)
   nr_numbers = random.randint(2, 4)
 
-  password_letters = [random.choice(letters) for item in range(nr_letters)]
-  password_symbols = [random.choice(symbols) for item in range(nr_symbols)]
-  password_numbers = [random.choice(numbers) for item in range(nr_numbers)]
+  password_letters = [random.choice(letters) for _ in range(nr_letters)]
+  password_symbols = [random.choice(symbols) for _ in range(nr_symbols)]
+  password_numbers = [random.choice(numbers) for _ in range(nr_numbers)]
 
   password_list = password_letters + password_symbols + password_numbers
   random.shuffle(password_list)
@@ -51,15 +52,22 @@ def save_password():
 
 
 #---------------------Get Last Used Email----------------------------#
-with open("data.txt", mode="rb") as data:
-  data.seek(-2, 2)  # Move to the second last byte of the data
-  while data.read(1) != b'\n':  # Move backwards until you find a newline character
-    data.seek(-2, 1)
-  last_line = data.readline().decode()
-  start = last_line.find('|') + 1  # Find the index of the first | and move one step forward
-  end = last_line.find('|', start)  # Find the index of the next | after start
-  previous_email = last_line[start:end].strip()
+previous_email = "" # Temporary mail
+def last_mail():
+  if os.path.exists("data.txt"):
+    with open("data.txt", mode="rb") as data:
+      data.seek(-2, 2)  # Move to the second last byte of the data
+      while data.read(1) != b'\n':  # Move backwards until you find a newline character
+        data.seek(-2, 1)
+      last_line = data.readline().decode()
+      start = last_line.find('|') + 1  # Find the index of the first | and move one step forward
+      end = last_line.find('|', start)  # Find the index of the next | after start
+      previous_email = last_line[start:end].strip()
+      if previous_email == "":
+        return ""
 
+  else:
+    return ""
 
 
 # ------------------------------UI Setup-----------------------------#
@@ -88,7 +96,7 @@ website_Entry.focus()
 
 email_username_Entry = Entry(width=52)
 email_username_Entry.grid(row=2,column=1, columnspan=2, sticky='w')
-email_username_Entry.insert(0, f"{previous_email}")
+email_username_Entry.insert(0, f"{last_mail()}")
 
 password_Entry = Entry(width=32)
 password_Entry.grid(row=3, column=1, sticky='w')
