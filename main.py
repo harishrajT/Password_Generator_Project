@@ -4,6 +4,7 @@ from tkinter import messagebox
 import random
 import pyperclip
 import os
+import json
 
 
 #-----------------password generator-------------------------#
@@ -32,9 +33,15 @@ def generate_password():
 #------------------------------save password------------------------#
 def save_password():
 
-  website = website_Entry.get()
-  email = email_username_Entry.get()
+  website = website_Entry.get().title()
+  email = email_username_Entry.get().lower()
   password = password_Entry.get()
+  new_data = {
+    website : {
+      "email": email,
+      "password": password
+    }
+  }
 
   if len(website)==0 or len(email)==0 or len(password) == 0:
     messagebox.showinfo(title="Error", message="input can not be empty")
@@ -44,30 +51,65 @@ def save_password():
                            f"\nPassword : {password} \nIs it ok to save? ")
 
     if is_ok:
-      with open("data.txt", mode="a") as data:
-        data.write(f"{website} | {email} | {password}\n")
+      try:
+        with open("data.json", mode="r") as data:
+          data_file = json.load(data)
+
+      except FileNotFoundError:
+        with open("data.json", "w") as data:
+          json.dump(new_data, data, indent=4)
+
+      else:
+        data_file.update(new_data)
+
+        with open("data.json", "w") as data:
+          json.dump(data_file, data, indent=4)
+
+      finally:
         website_Entry.delete(0, END)
         password_Entry.delete(0, END)
 
 
 
-#---------------------Get Last Used Email----------------------------#
-previous_email = "" # Temporary mail
-def last_mail():
-  if os.path.exists("data.txt"):
-    with open("data.txt", mode="rb") as data:
-      data.seek(-2, 2)  # Move to the second last byte of the data
-      while data.read(1) != b'\n':  # Move backwards until you find a newline character
-        data.seek(-2, 1)
-      last_line = data.readline().decode()
-      start = last_line.find('|') + 1  # Find the index of the first | and move one step forward
-      end = last_line.find('|', start)  # Find the index of the next | after start
-      previous_email = last_line[start:end].strip()
-      if previous_email == "":
-        return ""
+# --------------------Find Password---------------------------------#
+def find_password():
+  website = website_Entry.get().title()
+
+  try:
+    with open("data.json") as data:
+      data_file = json.load(data)
+
+  except FileNotFoundError:
+      messagebox.showinfo(title="Error", message="No data file found")
 
   else:
-    return ""
+      if website in data_file:
+        email = data_file[website]["email"]
+        password = data_file[website]["password"]
+        messagebox.showinfo(title=website, message=f"Email:{email} \nPassword:{password}")
+      else:
+        messagebox.showinfo(title="Error", message=f"There is no website found named \"{website}\" ")
+
+
+
+#---------------------Get Last Used Email----------------------------#
+previous_email = ""  # Temporary email variable
+
+def last_mail():
+  if os.path.exists("data.json"):
+    with open("data.json", mode="r") as file:
+      data = json.load(file)
+
+      if data:  # Check if the dictionary is not empty
+        last_Entry = list(data.keys())[-1]
+        last_entry_details = data[last_Entry]
+
+        # Assuming 'email' is the key storing the email address in the service dictionary
+        previous_email = last_entry_details.get('email', "").strip()
+
+        return previous_email if previous_email else ""  # Return the email or empty string if not found
+
+  return ""  # Return an empty string if file doesn't exist or no email is found
 
 
 # ------------------------------UI Setup-----------------------------#
@@ -90,8 +132,8 @@ email_username_label.grid(row = 2, column=0)
 password_label = Label(text="Password : ")
 password_label.grid(row = 3, column=0, )
 
-website_Entry = Entry(width=52)
-website_Entry.grid(row=1, column=1, columnspan=2, sticky='w')
+website_Entry = Entry(width=32)
+website_Entry.grid(row=1, column=1, sticky='w')
 website_Entry.focus()
 
 email_username_Entry = Entry(width=52)
@@ -101,7 +143,10 @@ email_username_Entry.insert(0, f"{last_mail()}")
 password_Entry = Entry(width=32)
 password_Entry.grid(row=3, column=1, sticky='w')
 
-generate_button= Button(text="Generate Password", command=generate_password)
+search_button = Button(text= "Search", width=14, command=find_password)
+search_button.grid(row=1, column=2)
+
+generate_button= Button(text="Generate Password", width=14, command=generate_password)
 generate_button.grid(row=3, column=2, sticky='w')
 
 add_password_button = Button(text="Add", width=44, command=save_password)
